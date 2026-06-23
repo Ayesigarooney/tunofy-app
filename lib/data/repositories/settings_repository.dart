@@ -53,4 +53,22 @@ class SettingsRepository {
   Future<void> setChannelRefreshPage(String channelId, String url) async {
     await _settingsBox?.put('channel_refresh_$channelId', url);
   }
+
+  // ─── Offline cache ─────────────────────────────────────────────────────────
+
+  String? getCachedRadioStationsJson() {
+    return _settingsBox?.get('cached_radio_stations') as String?;
+  }
+
+  Future<void> setCachedRadioStationsJson(String json) async {
+    await _settingsBox?.put('cached_radio_stations', json);
+  }
+
+  String? getCachedTvChannelsJson() {
+    return _settingsBox?.get('cached_tv_channels') as String?;
+  }
+
+  Future<void> setCachedTvChannelsJson(String json) async {
+    await _settingsBox?.put('cached_tv_channels', json);
+  }
 }

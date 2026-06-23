@@ -2,8 +2,10 @@
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../core/theme/app_theme.dart';
+import '../providers/app_providers.dart';
 
 /// ─── Section Header ─────────────────────────────────────────────────────────
 
@@ -216,10 +218,10 @@ class StationCard extends StatelessWidget {
                   ? CachedNetworkImage(
                       imageUrl: logoUrl!,
                       fit: BoxFit.cover,
-                      placeholder: (_, __) => _LogoPlaceholder(name: name),
-                      errorWidget: (_, __, ___) => _LogoPlaceholder(name: name),
+                      placeholder: (_, __) => _LogoPlaceholder(),
+                      errorWidget: (_, __, ___) => _LogoPlaceholder(),
                     )
-                  : _LogoPlaceholder(name: name),
+                  : _LogoPlaceholder(),
             ),
             const SizedBox(width: 12),
 
@@ -294,19 +296,31 @@ class StationCard extends StatelessWidget {
 }
 
 class _LogoPlaceholder extends StatelessWidget {
-  final String name;
-  const _LogoPlaceholder({required this.name});
+  const _LogoPlaceholder();
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Text(
-        name.isNotEmpty ? name[0].toUpperCase() : '?',
-        style: TextStyle(
-          color: AppColors.accentOrange,
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'T',
+            style: TextStyle(
+              color: AppColors.accentOrange,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          Text(
+            'f',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -625,6 +639,88 @@ class TunoErrorWidget extends StatelessWidget {
 }
 
 /// ─── Loading shimmer list ────────────────────────────────────────────────────
+
+// ─── Offline Banner ──────────────────────────────────────────────────────────
+
+class OfflineBanner extends ConsumerWidget {
+  const OfflineBanner({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final offline = ref.watch(offlineModeProvider);
+    if (!offline) return const SizedBox.shrink();
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      color: AppColors.liveRed.withOpacity(0.9),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.cloud_off_rounded, size: 14, color: Colors.white),
+          SizedBox(width: 6),
+          Text(
+            'Offline — showing cached stations',
+            style: TextStyle(color: Colors.white, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Branded Title ────────────────────────────────────────────────────────────
+
+class TunofyTitle extends StatelessWidget {
+  final String subtitle;
+  final Color subtitleColor;
+
+  const TunofyTitle({
+    super.key,
+    required this.subtitle,
+    this.subtitleColor = AppColors.accentOrange,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(
+          'Tuno',
+          style: const TextStyle(
+            color: AppColors.accentOrange,
+            fontWeight: FontWeight.w800,
+            fontSize: 22,
+          ),
+        ),
+        Text(
+          'fy',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontWeight: FontWeight.w800,
+            fontSize: 22,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: subtitleColor.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            subtitle,
+            style: TextStyle(
+              color: subtitleColor,
+              fontSize: 8,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 class ShimmerList extends StatelessWidget {
   final int itemCount;

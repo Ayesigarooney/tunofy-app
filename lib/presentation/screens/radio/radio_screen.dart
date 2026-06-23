@@ -21,43 +21,7 @@ class RadioScreen extends ConsumerWidget {
       SliverAppBar(
         floating: true,
         snap: true,
-        title: Row(
-          children: [
-            Text(
-              'Tuno',
-              style: TextStyle(
-                color: AppColors.accentOrange,
-                fontWeight: FontWeight.w800,
-                fontSize: 22,
-              ),
-            ),
-            Text(
-              'fy',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface,
-                fontWeight: FontWeight.w800,
-                fontSize: 22,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.accentOrange.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Text(
-                'RADIO',
-                style: TextStyle(
-                  color: AppColors.accentOrange,
-                  fontSize: 8,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
-                ),
-              ),
-            ),
-          ],
-        ),
+        title: const TunofyTitle(subtitle: 'RADIO'),
         actions: [
           IconButton(
             icon: const Icon(Icons.search_rounded),
@@ -65,8 +29,6 @@ class RadioScreen extends ConsumerWidget {
           ),
         ],
       ),
-
-
     ];
 
     stationsAsync.when(

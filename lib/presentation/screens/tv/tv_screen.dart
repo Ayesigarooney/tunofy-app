@@ -26,36 +26,9 @@ class TvScreen extends ConsumerWidget {
       SliverAppBar(
         floating: true,
         snap: true,
-        title: Row(
-          children: [
-            Text('Tuno',
-                style: const TextStyle(
-                    color: AppColors.accentOrange,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 22)),
-            Text('fy',
-                style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 22)),
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.accentGreen.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Text(
-                'TV',
-                style: TextStyle(
-                  color: AppColors.accentGreen,
-                  fontSize: 8,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
-                ),
-              ),
-            ),
-          ],
+        title: const TunofyTitle(
+          subtitle: 'TV',
+          subtitleColor: AppColors.accentGreen,
         ),
         actions: [
           IconButton(

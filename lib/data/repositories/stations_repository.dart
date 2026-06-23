@@ -1,18 +1,24 @@
+import 'dart:convert';
 import '../models/radio_station.dart';
 import '../services/channel_service.dart';
 import '../services/radio_browser_service.dart';
+import 'settings_repository.dart';
 
 class StationsRepository {
   final ChannelService _channelService;
   final RadioBrowserService _radioBrowserService;
+  final SettingsRepository _settings;
 
   List<TvChannel>? _tvCache;
   List<RadioStation>? _radioCache;
   List<String>? _radioCategories;
   List<String>? _tvCategories;
 
-  StationsRepository()
-      : _channelService = ChannelService(),
+  bool isOffline = false;
+
+  StationsRepository({required SettingsRepository settingsRepository})
+      : _settings = settingsRepository,
+        _channelService = ChannelService(),
         _radioBrowserService = RadioBrowserService();
 
   Future<List<RadioStation>> getRadioStations() async {
@@ -22,11 +28,22 @@ class StationsRepository {
       if (stations.isNotEmpty) {
         _radioCache = _buildRadioList(stations);
         _computeRadioCategories();
+        isOffline = false;
+        _cacheRadioStations();
         return _radioCache!;
       }
-    } catch (_) {}
+    } catch (_) {
+      final cached = _loadCachedRadioStations();
+      if (cached != null) {
+        _radioCache = _buildRadioList(cached);
+        _computeRadioCategories();
+        isOffline = true;
+        return _radioCache!;
+      }
+    }
     _radioCache = getFallbackRadioStations();
     _radioCategories = null;
+    isOffline = true;
     return _radioCache!;
   }
 
@@ -37,12 +54,61 @@ class StationsRepository {
       if (channels.isNotEmpty) {
         _tvCache = _buildTvList(channels);
         _computeTvCategories();
+        isOffline = false;
+        _cacheTvChannels();
         return _tvCache!;
       }
-    } catch (_) {}
+    } catch (_) {
+      final cached = _loadCachedTvChannels();
+      if (cached != null) {
+        _tvCache = _buildTvList(cached);
+        _computeTvCategories();
+        isOffline = true;
+        return _tvCache!;
+      }
+    }
     _tvCache = getFallbackTvChannels();
     _tvCategories = null;
+    isOffline = true;
     return _tvCache!;
+  }
+
+  void _cacheRadioStations() {
+    if (_radioCache == null) return;
+    try {
+      final json = jsonEncode(_radioCache!.map((s) => s.toJson()).toList());
+      _settings.setCachedRadioStationsJson(json);
+    } catch (_) {}
+  }
+
+  List<RadioStation>? _loadCachedRadioStations() {
+    try {
+      final json = _settings.getCachedRadioStationsJson();
+      if (json == null) return null;
+      final list = jsonDecode(json) as List<dynamic>;
+      return list.map((e) => RadioStation.fromJson(e as Map<String, dynamic>)).toList();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _cacheTvChannels() {
+    if (_tvCache == null) return;
+    try {
+      final json = jsonEncode(_tvCache!.map((c) => c.toJson()).toList());
+      _settings.setCachedTvChannelsJson(json);
+    } catch (_) {}
+  }
+
+  List<TvChannel>? _loadCachedTvChannels() {
+    try {
+      final json = _settings.getCachedTvChannelsJson();
+      if (json == null) return null;
+      final list = jsonDecode(json) as List<dynamic>;
+      return list.map((e) => TvChannel.fromJson(e as Map<String, dynamic>)).toList();
+    } catch (_) {
+      return null;
+    }
   }
 
   List<String> getRadioCategories() {

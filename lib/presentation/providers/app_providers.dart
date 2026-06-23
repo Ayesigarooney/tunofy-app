@@ -17,7 +17,8 @@ import '../../data/services/audio_player_service.dart';
 // ─── Singleton Services ───────────────────────────────────────────────────────
 
 final stationsRepositoryProvider = Provider<StationsRepository>((ref) {
-  return StationsRepository();
+  final settingsRepo = ref.watch(settingsRepositoryProvider);
+  return StationsRepository(settingsRepository: settingsRepo);
 });
 
 final favoritesRepositoryProvider = Provider<FavoritesRepository>((ref) {
@@ -147,11 +148,17 @@ class PlayerStateNotifier extends StateNotifier<TunoPlayerState> {
   }
 }
 
+// ─── Offline ──────────────────────────────────────────────────────────────────
+
+final offlineModeProvider = StateProvider<bool>((ref) => false);
+
 // ─── Radio ────────────────────────────────────────────────────────────────────
 
 final radioStationsProvider = FutureProvider<List<RadioStation>>((ref) async {
   final repo = ref.watch(stationsRepositoryProvider);
-  return repo.getRadioStations();
+  final stations = await repo.getRadioStations();
+  ref.read(offlineModeProvider.notifier).state = repo.isOffline;
+  return stations;
 });
 
 final selectedRadioCategoryProvider = StateProvider<String>((ref) => 'All');
@@ -188,7 +195,9 @@ final radioCategoriesProvider = FutureProvider<List<String>>((ref) async {
 
 final tvChannelsProvider = FutureProvider<List<TvChannel>>((ref) async {
   final repo = ref.watch(stationsRepositoryProvider);
-  return repo.getTvChannels();
+  final channels = await repo.getTvChannels();
+  ref.read(offlineModeProvider.notifier).state = repo.isOffline;
+  return channels;
 });
 
 final selectedTvCategoryProvider = StateProvider<String>((ref) => 'All');

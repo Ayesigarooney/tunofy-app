@@ -37,10 +37,16 @@ class _MainShellState extends ConsumerState<MainShell> {
     return Scaffold(
       body: Stack(
         children: [
-          // Main screen
-          IndexedStack(
-            index: _currentIndex,
-            children: _screens,
+          Column(
+            children: [
+              const OfflineBanner(),
+              Expanded(
+                child: IndexedStack(
+                  index: _currentIndex,
+                  children: _screens,
+                ),
+              ),
+            ],
           ),
 
           // Mini player bar (floating above bottom nav)
