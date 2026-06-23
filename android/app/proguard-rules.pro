@@ -1,0 +1,11 @@
+-keep class com.example.tunofy.** { *; }
+-keep class com.rooney.tunofy.** { *; }
+-keep class com.tunofy.app.** { *; }
+-keep class io.flutter.** { *; }
+-keep class io.flutter.plugins.** { *; }
+-keep class com.mediakit.** { *; }
+-keep class org.webrtc.** { *; }
+-keep class com.google.android.play.core.** { *; }
+-dontwarn com.mediakit.**
+-dontwarn org.webrtc.**
+-dontwarn com.google.android.play.core.**

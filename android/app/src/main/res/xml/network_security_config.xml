@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- android/app/src/main/res/xml/network_security_config.xml -->
+<!--
+  Allows cleartext (http://) connections specifically for legacy Caster.fm/Icecast
+  streaming endpoints. All other traffic remains encrypted (https://).
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system"/>
+        </trust-anchors>
+    </base-config>
+
+    <!-- Permit http:// for Caster.fm streaming ports -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">caster.fm</domain>
+        <!-- Add your specific Caster.fm subdomain here, e.g.: -->
+        <!-- <domain includeSubdomains="true">yourstationname.caster.fm</domain> -->
+    </domain-config>
+
+    <!-- Permit http:// for any other legacy Icecast stream hosts you use -->
+    <!-- Example:
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">your-icecast-host.com</domain>
+    </domain-config>
+    -->
+</network-security-config>

@@ -1,0 +1,75 @@
+name: tunofy
+description: A high-performance unified streaming hub for TV and FM radio.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Audio playback
+  just_audio: ^0.9.36
+  audio_service: ^0.18.12
+
+  # Video playback
+  media_kit: ^1.1.10
+  media_kit_video: ^1.2.4
+  media_kit_libs_video: ^1.0.4
+
+  # Networking
+  dio: ^5.4.1
+
+  # State management
+  flutter_riverpod: ^2.4.10
+
+  # Local storage
+  hive_flutter: ^1.1.0
+  hive: ^2.2.3
+
+  # UI utilities
+  cached_network_image: ^3.3.1
+  shimmer: ^3.0.0
+  google_fonts: ^6.1.0
+  url_launcher: ^6.2.4
+
+  # File system access for encryption key storage
+  path_provider: ^2.1.1
+
+  # Sharing (WhatsApp, Telegram, etc.)
+  share_plus: ^9.0.0
+
+  # Permissions (storage, microphone, etc.)
+  permission_handler: ^11.3.0
+
+  # Audio recording for radio snippets
+  record: ^5.0.0
+
+  # In-app webview for news articles
+  webview_flutter: ^4.7.0
+
+  # Embedded HTTP server for local playlist sharing
+  shelf: ^1.4.0
+  shelf_router: ^1.1.4
+  shelf_cors_headers: ^0.1.5
+
+  # Home screen widget (now playing)
+  home_widget: ^0.9.3
+
+  # Local notifications display
+  flutter_local_notifications: ^18.0.1
+  xml: ^6.6.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  build_runner: ^2.4.8
+  hive_generator: ^2.0.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
