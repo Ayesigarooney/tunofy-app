@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_cors_headers/shelf_cors_headers.dart';
@@ -43,15 +44,26 @@ class PlaylistServer {
         .addMiddleware(corsHeaders())
         .addHandler(router);
 
-    _server = await shelf_io.serve(handler, host, port);
-    print('Playlist server running on http://${host}:${port}');
+    try {
+      _server = await shelf_io.serve(handler, host, port);
+      debugPrint('Playlist server running on http://${host}:${port}');
+    } catch (e) {
+      debugPrint('Failed to start playlist server: $e');
+      rethrow;
+    }
 
     _startPeriodicRefresh();
   }
 
   Future<void> stop() async {
     _refreshTimer?.cancel();
-    await _server?.close(force: true);
+    _refreshTimer = null;
+    try {
+      await _server?.close(force: true);
+      debugPrint('Playlist server stopped');
+    } catch (e) {
+      debugPrint('Error stopping playlist server: $e');
+    }
     _server = null;
   }
 

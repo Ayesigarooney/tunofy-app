@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../models/radio_station.dart';
 import '../../core/constants/env_config.dart';
 
@@ -54,7 +55,8 @@ class ChannelService {
       _cache = channels;
       _lastFetch = DateTime.now();
       return channels;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Backend TV fetch failed, falling back to iptv-org: $e');
       return _fetchFromIptvOrg();
     }
   }
@@ -84,7 +86,8 @@ class ChannelService {
           )
           .timeout(const Duration(seconds: 10));
       return _parseM3u(resp.data as String, category);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('TV category fetch error ($category): $e');
       return [];
     }
   }

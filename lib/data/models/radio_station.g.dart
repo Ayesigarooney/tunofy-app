@@ -1,6 +1,4 @@
-// lib/data/models/radio_station.g.dart
 // GENERATED CODE - DO NOT MODIFY BY HAND
-// Run `flutter pub run build_runner build` to regenerate.
 
 part of 'radio_station.dart';
 

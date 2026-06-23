@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../models/radio_station.dart';
 import '../../core/constants/env_config.dart';
 
@@ -48,7 +49,8 @@ class RadioBrowserService {
       _cache = stations;
       _lastFetch = DateTime.now();
       return stations;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Backend radio fetch failed, falling back to radio-browser: $e');
       return _fetchFromRadioBrowser();
     }
   }
@@ -81,7 +83,8 @@ class RadioBrowserService {
           .where((s) => s != null)
           .cast<RadioStation>()
           .toList();
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Radio list fetch error: $e');
       return [];
     }
   }
@@ -100,7 +103,9 @@ class RadioBrowserService {
         return resp.data!
             .map((e) => RadioStation.fromJson(e as Map<String, dynamic>))
             .toList();
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('Backend search fallback: $e');
+      }
     }
 
     try {
@@ -120,7 +125,8 @@ class RadioBrowserService {
           .where((s) => s != null)
           .cast<RadioStation>()
           .toList();
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Radio search error: $e');
       return [];
     }
   }

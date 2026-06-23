@@ -1,5 +1,3 @@
--keep class com.example.tunofy.** { *; }
--keep class com.rooney.tunofy.** { *; }
 -keep class com.tunofy.app.** { *; }
 -keep class io.flutter.** { *; }
 -keep class io.flutter.plugins.** { *; }

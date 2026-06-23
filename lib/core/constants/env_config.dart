@@ -12,13 +12,16 @@ class EnvConfig {
   );
 
   static bool get hasValidKeys =>
-      tmdbApiKey != 'YOUR_TMDB_API_KEY' ||
+      tmdbApiKey != 'YOUR_TMDB_API_KEY' &&
       youtubeApiKey != 'YOUR_YOUTUBE_API_KEY';
+
+  static bool get hasTmdbKey => tmdbApiKey != 'YOUR_TMDB_API_KEY';
+  static bool get hasYoutubeKey => youtubeApiKey != 'YOUR_YOUTUBE_API_KEY';
 
   // Embedded playlist server port (0 = disabled)
   static const int serverPort = int.fromEnvironment(
     'SERVER_PORT',
-    defaultValue: 8080,
+    defaultValue: 0,
   );
 
   // Backend server URL (optional — if set, app fetches TV/radio from this server)

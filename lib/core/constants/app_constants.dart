@@ -20,6 +20,9 @@ class AppConstants {
   static const String recentlyPlayedBoxName = 'recently_played';
   static const String settingsBoxName = 'settings';
 
+  // Package name
+  static const String packageName = 'com.tunofy.app';
+
   // Settings Keys
   static const String lowDataModeKey = 'low_data_mode';
   static const String themeModeKey = 'theme_mode';
