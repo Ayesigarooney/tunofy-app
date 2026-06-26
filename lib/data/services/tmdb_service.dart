@@ -62,17 +62,6 @@ class TmdbService {
     }
   }
 
-  Future<Movie?> getMovieDetails(int movieId) async {
-    try {
-      final response = await _dio.get('/movie/$movieId');
-      return Movie.fromJson(response.data as Map<String, dynamic>);
-    } on DioException {
-      return null;
-    } catch (_) {
-      return null;
-    }
-  }
-
   Future<List<Movie>> getAfricanMovies() async {
     try {
       final response = await _dio.get('/discover/movie', queryParameters: {
@@ -102,7 +91,6 @@ class TmdbService {
       }
       for (final v in results) {
         final site = v['site'] as String?;
-        final type = v['type'] as String?;
         final key = v['key'] as String?;
         if (site == 'YouTube' && key != null && key.isNotEmpty) {
           return key;

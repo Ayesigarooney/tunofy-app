@@ -9,25 +9,34 @@ class M3uService {
 
   static const _categories = [
     'news', 'sports', 'entertainment', 'music', 'documentary',
-    'education', 'kids', 'movies', 'religion', 'general',
-    'business', 'science', 'travel', 'animation',
+    'education', 'kids', 'movies', 'general',
   ];
 
   M3uService({http.Client? client}) : _client = client ?? http.Client();
 
   Future<List<TvChannel>> fetchChannels() async {
     final all = <TvChannel>{};
-    for (final category in _categories) {
-      try {
-        final resp = await _client
-            .get(Uri.parse('$_baseUrl/$category.m3u'))
-            .timeout(const Duration(seconds: 15));
-        if (resp.statusCode == 200) {
-          all.addAll(_parseM3u(resp.body, category));
-        }
-      } catch (_) {}
+    // Fetch all categories in parallel for speed
+    final results = await Future.wait(
+      _categories.map((cat) => _fetchCategory(cat)),
+      eagerError: false,
+    );
+    for (final channels in results) {
+      all.addAll(channels);
     }
     return all.toList();
+  }
+
+  Future<List<TvChannel>> _fetchCategory(String category) async {
+    try {
+      final resp = await _client
+          .get(Uri.parse('$_baseUrl/$category.m3u'))
+          .timeout(const Duration(seconds: 10));
+      if (resp.statusCode == 200) {
+        return _parseM3u(resp.body, category);
+      }
+    } catch (_) {}
+    return [];
   }
 
   List<TvChannel> _parseM3u(String raw, String fallbackCategory) {

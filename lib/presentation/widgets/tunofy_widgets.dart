@@ -141,15 +141,21 @@ class CategoryChipBar extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isSelected
                     ? AppColors.accentOrange
-                    : Theme.of(context).colorScheme.surfaceVariant,
+                    : Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 cat,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  color: isSelected
+                      ? Colors.white
+                      : Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.7),
                   fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  fontWeight:
+                      isSelected ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
             ),
@@ -196,11 +202,11 @@ class StationCard extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isPlaying
-              ? AppColors.accentOrange.withOpacity(0.12)
+              ? AppColors.accentOrange.withValues(alpha: 0.12)
               : (isDark ? AppColors.surface : AppColors.lightSurface),
           borderRadius: BorderRadius.circular(12),
           border: isPlaying
-              ? Border.all(color: AppColors.accentOrange.withOpacity(0.4), width: 1)
+              ? Border.all(color: AppColors.accentOrange.withValues(alpha: 0.4), width: 1)
               : Border.all(color: Colors.transparent),
         ),
         child: Row(
@@ -410,7 +416,7 @@ class MoviePosterCard extends StatelessWidget {
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
-                  color: Theme.of(context).colorScheme.surfaceVariant,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 ),
                 clipBehavior: Clip.antiAlias,
                 child: Stack(
@@ -432,7 +438,7 @@ class MoviePosterCard extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.75),
+                            color: Colors.black.withValues(alpha: 0.75),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Row(
@@ -469,6 +475,8 @@ class MoviePosterCard extends StatelessWidget {
 }
 
 class _ShimmerBox extends StatelessWidget {
+  const _ShimmerBox();
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -519,10 +527,10 @@ class MiniPlayerBar extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.accentOrange.withOpacity(0.3)),
+          border: Border.all(color: AppColors.accentOrange.withValues(alpha: 0.3)),
           boxShadow: [
             BoxShadow(
-              color: AppColors.accentOrange.withOpacity(0.08),
+              color: AppColors.accentOrange.withValues(alpha: 0.08),
               blurRadius: 12,
               spreadRadius: 0,
             ),
@@ -535,7 +543,7 @@ class MiniPlayerBar extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: AppColors.accentOrange.withOpacity(0.15),
+                color: AppColors.accentOrange.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.radio, color: AppColors.accentOrange, size: 18),
@@ -652,7 +660,7 @@ class OfflineBanner extends ConsumerWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      color: AppColors.liveRed.withOpacity(0.9),
+      color: AppColors.liveRed.withValues(alpha: 0.9),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -704,7 +712,7 @@ class TunofyTitle extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
-            color: subtitleColor.withOpacity(0.15),
+            color: subtitleColor.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(4),
           ),
           child: Text(
@@ -722,31 +730,241 @@ class TunofyTitle extends StatelessWidget {
   }
 }
 
-class ShimmerList extends StatelessWidget {
-  final int itemCount;
+// ─── Skeleton Loaders ─────────────────────────────────────────────────────────
 
-  const ShimmerList({super.key, this.itemCount = 6});
+class RadioSkeleton extends StatelessWidget {
+  const RadioSkeleton({super.key});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return ListView.builder(
-      itemCount: itemCount,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemBuilder: (_, __) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        child: Shimmer.fromColors(
-          baseColor: isDark ? AppColors.surfaceVariant : AppColors.lightSurfaceVariant,
-          highlightColor: isDark ? AppColors.surfaceElevated : Colors.white,
-          child: Container(
-            height: 68,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
+    final base = isDark ? AppColors.surfaceVariant : AppColors.lightSurfaceVariant;
+    final highlight = isDark ? AppColors.surfaceElevated : Colors.white;
+    return Shimmer.fromColors(
+      baseColor: base,
+      highlightColor: highlight,
+      child: Column(
+        children: [
+          _skeletonSectionHeader(),
+          _skeletonHorizontalScroll(),
+          _skeletonSectionHeader(),
+          _skeletonHorizontalScroll(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: Row(
+              children: [
+                _skeletonBox(width: 80, height: 28),
+                const SizedBox(width: 8),
+                _skeletonBox(width: 100, height: 28),
+                const SizedBox(width: 8),
+                _skeletonBox(width: 70, height: 28),
+                const Spacer(),
+                _skeletonBox(width: 36, height: 28),
+              ],
             ),
           ),
+          for (var i = 0; i < 5; i++) _skeletonStationRow(),
+        ],
+      ),
+    );
+  }
+
+  Widget _skeletonSectionHeader() => const Padding(
+    padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
+    child: Row(
+      children: [
+        _SkeletonBlock(width: 100, height: 20),
+        Spacer(),
+        _SkeletonBlock(width: 50, height: 14),
+      ],
+    ),
+  );
+
+  Widget _skeletonHorizontalScroll() => SizedBox(
+    height: 120,
+    child: ListView.builder(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      itemCount: 5,
+      itemBuilder: (_, __) => const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 4),
+        child: _SkeletonBlock(width: 100, height: 110),
+      ),
+    ),
+  );
+
+  Widget _skeletonStationRow() => const Padding(
+    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+    child: Row(
+      children: [
+        _SkeletonBlock(width: 48, height: 48, borderRadius: 10),
+        SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _SkeletonBlock(width: double.infinity, height: 14),
+              SizedBox(height: 6),
+              _SkeletonBlock(width: 140, height: 12),
+            ],
+          ),
         ),
+        _SkeletonBlock(width: 24, height: 24, borderRadius: 12),
+      ],
+    ),
+  );
+
+  Widget _skeletonBox({required double width, required double height}) =>
+      _SkeletonBlock(width: width, height: height, borderRadius: 6);
+}
+
+class TvSkeleton extends StatelessWidget {
+  const TvSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final base = isDark ? AppColors.surfaceVariant : AppColors.lightSurfaceVariant;
+    final highlight = isDark ? AppColors.surfaceElevated : Colors.white;
+    return Shimmer.fromColors(
+      baseColor: base,
+      highlightColor: highlight,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Row(
+              children: [
+                _skeletonChip(60), const SizedBox(width: 6),
+                _skeletonChip(80), const SizedBox(width: 6),
+                _skeletonChip(70), const SizedBox(width: 6),
+                _skeletonChip(90), const SizedBox(width: 6),
+                _skeletonChip(55),
+              ],
+            ),
+          ),
+          for (var r = 0; r < 4; r++)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Row(
+                children: [
+                  _skeletonCard(),
+                  const SizedBox(width: 8),
+                  _skeletonCard(),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _skeletonChip(double w) => _SkeletonBlock(width: w, height: 28, borderRadius: 14);
+  Widget _skeletonCard() => const Expanded(
+    child: _SkeletonBlock(width: double.infinity, height: 140, borderRadius: 10),
+  );
+}
+
+class MoviesSkeleton extends StatelessWidget {
+  const MoviesSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final base = isDark ? AppColors.surfaceVariant : AppColors.lightSurfaceVariant;
+    final highlight = isDark ? AppColors.surfaceElevated : Colors.white;
+    return Shimmer.fromColors(
+      baseColor: base,
+      highlightColor: highlight,
+      child: Column(
+        children: [
+          for (var i = 0; i < 4; i++) ...[
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
+              child: Row(
+                children: [
+                  _SkeletonBlock(width: 120, height: 20),
+                  Spacer(),
+                  _SkeletonBlock(width: 60, height: 14),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 200,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                itemCount: 4,
+                itemBuilder: (_, __) => const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4),
+                  child: _SkeletonBlock(width: 130, height: 195, borderRadius: 10),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class NewsSkeleton extends StatelessWidget {
+  const NewsSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final base = isDark ? AppColors.surfaceVariant : AppColors.lightSurfaceVariant;
+    final highlight = isDark ? AppColors.surfaceElevated : Colors.white;
+    return Shimmer.fromColors(
+      baseColor: base,
+      highlightColor: highlight,
+      child: Column(
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: _SkeletonBlock(width: double.infinity, height: 200, borderRadius: 14),
+          ),
+          for (var i = 0; i < 4; i++)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Row(
+                children: [
+                  _SkeletonBlock(width: 80, height: 60, borderRadius: 10),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _SkeletonBlock(width: double.infinity, height: 14),
+                        SizedBox(height: 6),
+                        _SkeletonBlock(width: 160, height: 12),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SkeletonBlock extends StatelessWidget {
+  final double width;
+  final double height;
+  final double borderRadius;
+  const _SkeletonBlock({required this.width, required this.height, this.borderRadius = 0});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width == double.infinity ? null : width,
+      height: height,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(borderRadius),
       ),
     );
   }

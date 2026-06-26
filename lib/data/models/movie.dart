@@ -11,7 +11,6 @@ class Movie {
   final List<int> genreIds;
   final bool isAdult;
   final String? originalLanguage;
-  final String? streamUrl;
 
   const Movie({
     required this.id,
@@ -24,7 +23,6 @@ class Movie {
     this.genreIds = const [],
     this.isAdult = false,
     this.originalLanguage,
-    this.streamUrl,
   });
 
   factory Movie.fromJson(Map<String, dynamic> json) {

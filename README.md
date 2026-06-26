@@ -13,10 +13,12 @@ Zero sign-up. Instant playback. Offline-first favorites. Background audio with h
 - **News** — RSS feeds from BBC Africa, The Guardian Africa, Daily Monitor
 - **Background audio** — `just_audio` + `audio_service` for lock-screen controls
 - **Favorites** — Hive-persisted across radio and TV
+- **Offline mode** — Cached stations/channels served when disconnected with visual indicator
 - **Recording** — Capture radio snippets to device storage
 - **Home widget** — Android home screen "Now Playing" widget
+- **Skeleton loading** — Shimmer placeholders on every tab while content loads
 - **Search** — Search radio stations by name from radio-browser.info
-- **Playlist server** — Embedded Shelf HTTP server to share playlist data on LAN
+- **Playlist server** — Embedded Shelf HTTP server to share playlist data on LAN (opt-in)
 - **Low-data mode** — Reduces bandwidth when enabled
 
 ---
@@ -38,18 +40,19 @@ lib/
 └── presentation/
     ├── providers/        # Riverpod providers (state management)
     ├── screens/
+    │   ├── main_shell.dart  # Shell, bottom nav, SplashScreen
     │   ├── radio/        # RadioScreen with category filter + search
     │   ├── tv/           # TvScreen with M3U channels + media_kit player
     │   ├── movies/       # MoviesScreen (TMDB integration)
     │   └── news/         # NewsScreen with built-in WebView reader
-    └── widgets/          # StationCard, MiniPlayer, CategoryChips, etc.
+    └── widgets/          # StationCard, MiniPlayer, CategoryChips, Skeleton loaders
 ```
 
 **State management:** Riverpod (FutureProvider + StateProvider)
 **Audio:** `just_audio` + `audio_service` (foreground service, lock-screen controls)
 **Video:** `media_kit` (ExoPlayer on Android, AVPlayer on iOS)
 **Storage:** Hive with AES-256 encryption
-**Networking:** Dio with timeouts
+**Networking:** Dio with timeouts & error logging
 
 ---
 
@@ -73,13 +76,13 @@ flutter pub get
 
 ### Configure API Keys
 
-Set via `--dart-define` at build time, or edit `lib/core/constants/env_config.dart`:
+Set via `--dart-define` at build time:
 
 | Key | Source | Default |
 |-----|--------|---------|
 | `TMDB_API_KEY` | https://themoviedb.org/settings/api | `YOUR_TMDB_API_KEY` |
 | `YOUTUBE_API_KEY` | https://console.cloud.google.com | `YOUR_YOUTUBE_API_KEY` |
-| `SERVER_PORT` | (optional) | `8080` |
+| `SERVER_PORT` | (optional) | `0` (disabled) |
 | `BACKEND_URL` | (optional) | `""` |
 
 ### Run
@@ -95,22 +98,35 @@ flutter build apk --split-per-abi --dart-define=TMDB_API_KEY=xxx --dart-define=Y
 
 ---
 
-## Backend Server (optional)
+## Offline Mode
 
-Tunofy includes an optional Dart Shelf backend (`server/`) for custom playlist management:
+When the network is unavailable, Tunofy serves stations/channels from its most recent
+Hive cache. A red "Offline — showing cached stations" banner appears at the top of
+the screen. All tabs gracefully degrade with cached data instead of showing empty states.
+
+---
+
+## Playlist Server (optional)
+
+Tunofy includes an embedded Dart Shelf HTTP server for serving radio/TV data on LAN.
+Enable it by setting `SERVER_PORT` via `--dart-define`:
+
+```bash
+flutter run --dart-define=SERVER_PORT=8080
+```
+
+A standalone backend (`server/`) is also available for custom playlist management:
 
 ```bash
 cd server
 dart run bin/server.dart
 ```
 
-When `BACKEND_URL` is configured, the app fetches radio/TV data from the backend instead of public APIs.
+When `BACKEND_URL` is configured, the app fetches data from the backend instead of public APIs.
 
 ---
 
-## Configuration Reference
-
-### Adding Stations
+## Adding Stations / Channels
 
 Edit `lib/data/repositories/stations_repository.dart`:
 
@@ -119,17 +135,13 @@ RadioStation(
   id: 'my_station',
   name: 'My Station FM',
   primaryUrl: 'https://stream.example.com/live',
-  category: 'Music',              // Must match getRadioCategories()
+  category: 'Music',
   country: 'UG',
   language: 'en',
   bitrate: 128,
   description: 'Station tagline',
 )
-```
 
-### Adding TV Channels
-
-```dart
 TvChannel(
   id: 'my_channel',
   name: 'My Channel',
@@ -147,10 +159,10 @@ TvChannel(
 |-----|-----|-------|---------|
 | `favorites` | station/channel ID | `'radio'` / `'tv'` | Starred items |
 | `recently_played` | station/channel ID | type string | History |
-| `settings` | setting key | dynamic | Preferences |
+| `settings` | setting key | dynamic | Preferences, offline cache |
 
 ---
 
 ## License
 
-Proprietary — Tunofy. All rights reserved.
+Proprietary — Tunofy App. All rights reserved.

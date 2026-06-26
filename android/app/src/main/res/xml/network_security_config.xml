@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- android/app/src/main/res/xml/network_security_config.xml -->
 <!--
-  Allows cleartext (http://) connections specifically for legacy Caster.fm/Icecast
-  streaming endpoints. All other traffic remains encrypted (https://).
+  Allows cleartext (http://) only for the specific legacy Icecast/Caster stream
+  hosts that do not yet serve HTTPS. All other traffic uses HTTPS.
 -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="false">
@@ -11,17 +10,25 @@
         </trust-anchors>
     </base-config>
 
-    <!-- Permit http:// for Caster.fm streaming ports -->
+    <!-- Legacy stream hosts that only serve http:// -->
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">caster.fm</domain>
-        <!-- Add your specific Caster.fm subdomain here, e.g.: -->
-        <!-- <domain includeSubdomains="true">yourstationname.caster.fm</domain> -->
+        <!-- KFM 93.3 -->
+        <domain includeSubdomains="true">radio.kfm.co.ug</domain>
+        <!-- Sanyu FM -->
+        <domain includeSubdomains="true">s44.myradiostream.com</domain>
+        <!-- Beat FM -->
+        <domain includeSubdomains="true">5230.cloudrad.io</domain>
+        <!-- Rock FM -->
+        <domain includeSubdomains="true">titan.shoutca.st</domain>
+        <!-- KIIS FM -->
+        <domain includeSubdomains="true">14867.cloudrad.io</domain>
+        <!-- Kaboozi FM -->
+        <domain includeSubdomains="true">162.244.80.52</domain>
+        <!-- Joy Hits -->
+        <domain includeSubdomains="true">joyhits.online</domain>
+        <!-- Favour FM Gulu -->
+        <domain includeSubdomains="true">us5new.listen2myradio.com</domain>
+        <!-- Christ FM 91.6 -->
+        <domain includeSubdomains="true">s39.myradiostream.com</domain>
     </domain-config>
-
-    <!-- Permit http:// for any other legacy Icecast stream hosts you use -->
-    <!-- Example:
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">your-icecast-host.com</domain>
-    </domain-config>
-    -->
 </network-security-config>

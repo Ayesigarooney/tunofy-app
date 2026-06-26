@@ -2,6 +2,7 @@
 
 import 'dart:async';
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import '../models/radio_station.dart';
 import '../../core/constants/app_constants.dart';
@@ -12,42 +13,18 @@ class TunoAudioHandler extends BaseAudioHandler with SeekHandler {
   RadioStation? _currentStation;
   int _currentUrlIndex = 0;
   bool _isLoading = false;
-  StreamSubscription? _playerStateSubscription;
-  StreamSubscription? _metadataSubscription;
-  Timer? _metadataTimer;
-
-  // Recording state
-  bool _isRecording = false;
-  String? _recordingFilePath;
-
-  // PiP state
-  bool _isInPipMode = false;
-
-  // Stream controllers
-  final _metadataController = StreamController<Map<String, String>>.broadcast();
-  Stream<Map<String, String>> get metadataStream => _metadataController.stream;
-
-  bool get isRecording => _isRecording;
-  String? get recordingFilePath => _recordingFilePath;
-  bool get isInPipMode => _isInPipMode;
-
-  set isInPipMode(bool value) => _isInPipMode = value;
-
-  void setRecordingState({required bool recording, String? filePath}) {
-    _isRecording = recording;
-    _recordingFilePath = filePath;
-  }
+  bool _isTryingFallback = false;
+  late final StreamSubscription<PlayerState> _playerStateSubscription;
 
   TunoAudioHandler() {
-    _init();
-  }
-
-  void _init() {
     _playerStateSubscription = _player.playerStateStream.listen((state) {
       _updatePlaybackState(state);
 
-      // Auto-retry on error with fallback URLs
-      if (!_isLoading && state.processingState == ProcessingState.idle && _currentStation != null) {
+      // Auto-retry with fallback URLs on unexpected idle (error/dropped stream)
+      if (!_isLoading &&
+          !_isTryingFallback &&
+          state.processingState == ProcessingState.idle &&
+          _currentStation != null) {
         _tryNextUrl();
       }
     });
@@ -92,13 +69,8 @@ class TunoAudioHandler extends BaseAudioHandler with SeekHandler {
   Future<void> playStation(RadioStation station) async {
     _currentStation = station;
     _currentUrlIndex = 0;
-    _stopMetadataPolling();
+    _isTryingFallback = false;
     await _loadUrl(station.primaryUrl);
-
-    // Start metadata polling for custom station
-    if (station.isCustomStation) {
-      _startMetadataPolling();
-    }
   }
 
   Future<void> _loadUrl(String url) async {
@@ -112,7 +84,6 @@ class TunoAudioHandler extends BaseAudioHandler with SeekHandler {
       _isLoading = false;
       await _player.play();
 
-      // Update media item in notification
       if (_currentStation != null) {
         mediaItem.add(MediaItem(
           id: _currentStation!.id,
@@ -128,6 +99,7 @@ class TunoAudioHandler extends BaseAudioHandler with SeekHandler {
       }
     } catch (e) {
       _isLoading = false;
+      debugPrint('[AudioHandler] Error loading $url: $e');
       await _tryNextUrl();
     }
   }
@@ -143,53 +115,22 @@ class TunoAudioHandler extends BaseAudioHandler with SeekHandler {
 
     _currentUrlIndex++;
     if (_currentUrlIndex < urls.length) {
-      await Future.delayed(AppConstants.retryDelay);
+      _isTryingFallback = true;
+      await Future<void>.delayed(AppConstants.retryDelay);
+      _isTryingFallback = false;
       await _loadUrl(urls[_currentUrlIndex]);
     }
-    // If all URLs exhausted, stay in idle state
-  }
-
-  void _startMetadataPolling() {
-    _metadataTimer?.cancel();
-    _metadataTimer = Timer.periodic(
-      AppConstants.metadataPollingInterval,
-      (_) => _fetchMetadata(),
-    );
-  }
-
-  void _stopMetadataPolling() {
-    _metadataTimer?.cancel();
-    _metadataTimer = null;
-  }
-
-  Future<void> _fetchMetadata() async {
-    // Metadata fetching is handled by RadioService via Dio
-    // This timer triggers a fetch event that RadioService listens to
-    _metadataController.add({'trigger': 'fetch'});
-  }
-
-  Future<void> setLowDataMode(bool enabled) async {
-    // Force audio-only at 64kbps when low data mode is on
-    // For streams that support quality switching, we'd switch to the low-quality variant
-    // For standard streams, just continue (audio is already low-data)
-    if (enabled) {
-      // Could implement bitrate-limited audio source here
-    }
+    // All URLs exhausted — stay in idle state, UI will show error
   }
 
   @override
-  Future<void> play() async {
-    await _player.play();
-  }
+  Future<void> play() async => _player.play();
 
   @override
-  Future<void> pause() async {
-    await _player.pause();
-  }
+  Future<void> pause() async => _player.pause();
 
   @override
   Future<void> stop() async {
-    _stopMetadataPolling();
     _currentStation = null;
     await _player.stop();
     HomeWidgetService.clearWidget();
@@ -200,10 +141,8 @@ class TunoAudioHandler extends BaseAudioHandler with SeekHandler {
   }
 
   AudioPlayer get player => _player;
-
   bool get isPlaying => _player.playing;
   ProcessingState get processingState => _player.processingState;
-
   Stream<PlayerState> get playerStateStream => _player.playerStateStream;
 
   @override
@@ -213,10 +152,7 @@ class TunoAudioHandler extends BaseAudioHandler with SeekHandler {
   }
 
   Future<void> dispose() async {
-    _playerStateSubscription?.cancel();
-    _metadataSubscription?.cancel();
-    _stopMetadataPolling();
-    await _metadataController.close();
+    _playerStateSubscription.cancel();
     await _player.dispose();
   }
 }

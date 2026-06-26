@@ -13,13 +13,6 @@ class SettingsRepository {
     );
   }
 
-  bool get lowDataMode =>
-      _settingsBox?.get(AppConstants.lowDataModeKey, defaultValue: false) as bool? ?? false;
-
-  Future<void> setLowDataMode(bool value) async {
-    await _settingsBox?.put(AppConstants.lowDataModeKey, value);
-  }
-
   ThemeMode get themeMode {
     final value = _settingsBox?.get(AppConstants.themeModeKey, defaultValue: 'system') as String?;
     return switch (value) {
@@ -48,10 +41,6 @@ class SettingsRepository {
 
   String? getChannelRefreshPage(String channelId) {
     return _settingsBox?.get('channel_refresh_$channelId') as String?;
-  }
-
-  Future<void> setChannelRefreshPage(String channelId, String url) async {
-    await _settingsBox?.put('channel_refresh_$channelId', url);
   }
 
   // ─── Offline cache ─────────────────────────────────────────────────────────

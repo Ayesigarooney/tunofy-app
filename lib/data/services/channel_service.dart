@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import '../models/radio_station.dart';
 import '../../core/constants/env_config.dart';
 
@@ -12,8 +11,7 @@ class ChannelService {
 
   static const _categoryPlaylists = [
     'news', 'sports', 'entertainment', 'music', 'documentary',
-    'education', 'kids', 'movies', 'religion', 'general',
-    'business', 'science', 'travel', 'animation',
+    'education', 'kids', 'movies', 'general',
   ];
 
   static const _baseUrl =
@@ -56,7 +54,6 @@ class ChannelService {
       _lastFetch = DateTime.now();
       return channels;
     } catch (e) {
-      debugPrint('Backend TV fetch failed, falling back to iptv-org: $e');
       return _fetchFromIptvOrg();
     }
   }
@@ -84,10 +81,9 @@ class ChannelService {
             '$_baseUrl/$category.m3u',
             options: Options(responseType: ResponseType.plain),
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 8));
       return _parseM3u(resp.data as String, category);
     } catch (e) {
-      debugPrint('TV category fetch error ($category): $e');
       return [];
     }
   }
@@ -168,8 +164,4 @@ class ChannelService {
     return match?.group(1);
   }
 
-  void invalidateCache() {
-    _cache = null;
-    _lastFetch = null;
-  }
 }

@@ -3,11 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/utils/share_utils.dart';
 import '../../../data/models/radio_station.dart';
-import '../../../data/repositories/settings_repository.dart';
 import '../../../data/services/channel_refresh_service.dart';
 import '../../providers/app_providers.dart';
 import '../../widgets/tunofy_widgets.dart';
@@ -52,11 +49,8 @@ class TvScreen extends ConsumerWidget {
     ];
 
     channelsAsync.when(
-      loading: () => slivers.add(const SliverToBoxAdapter(
-        child: SizedBox(
-          height: 300,
-          child: Center(child: CircularProgressIndicator()),
-        ),
+      loading: () => slivers.add(const SliverFillRemaining(
+        child: TvSkeleton(),
       )),
       error: (e, _) => slivers.add(SliverFillRemaining(
         child: TunoErrorWidget(
@@ -145,7 +139,7 @@ class _TvSearchDelegate extends SearchDelegate<String> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Center(
@@ -349,7 +343,7 @@ class _TvFavoritesRow extends ConsumerWidget {
                       width: 54,
                       height: 54,
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceVariant,
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: AppColors.accentGreen.withValues(alpha: 0.3),
@@ -429,7 +423,7 @@ class _SortChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.accentGreen.withValues(alpha: 0.15)
-              : Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.5),
+              : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(12),
           border: isSelected
               ? Border.all(color: AppColors.accentGreen.withValues(alpha: 0.4))
@@ -510,10 +504,9 @@ class _TvPlayerScreen extends ConsumerStatefulWidget {
 class _TvPlayerScreenState extends ConsumerState<_TvPlayerScreen> {
   Player? _mediaKitPlayer;
   VideoController? _videoController;
-  bool _isBuffering = true;
+  bool _isBuffering = false;
   bool _loading = true;
   String? _errorMessage;
-  final _refreshService = ChannelRefreshService();
   String? _resolvedUrl;
 
   @override
@@ -535,13 +528,15 @@ class _TvPlayerScreenState extends ConsumerState<_TvPlayerScreen> {
 
     final refreshPage = settings.getChannelRefreshPage(channelId);
     if (refreshPage != null && refreshPage.isNotEmpty) {
-      final freshUrl = await _refreshService.refreshFromPage(refreshPage);
-      if (freshUrl != null && mounted) {
-        _resolvedUrl = freshUrl;
-        await settings.setChannelUrl(channelId, freshUrl);
-        _initMediaKit();
-        return;
-      }
+      try {
+        final freshUrl = await ChannelRefreshService().refreshFromPage(refreshPage);
+        if (freshUrl != null && mounted) {
+          _resolvedUrl = freshUrl;
+          await settings.setChannelUrl(channelId, freshUrl);
+          _initMediaKit();
+          return;
+        }
+      } catch (_) {}
     }
 
     _resolvedUrl = widget.channel.primaryUrl;
@@ -549,33 +544,47 @@ class _TvPlayerScreenState extends ConsumerState<_TvPlayerScreen> {
   }
 
   void _initMediaKit() {
+    if (!mounted) return;
     final player = Player(
-      configuration: const PlayerConfiguration(
-        bufferSize: 64 * 1024 * 1024,
-      ),
+      configuration: const PlayerConfiguration(bufferSize: 32 * 1024 * 1024),
     );
     _mediaKitPlayer = player;
     _videoController = VideoController(player);
+
     player.stream.buffering.listen((buffering) {
       if (mounted) setState(() => _isBuffering = buffering);
     });
-    player.stream.error.listen((_) {
-      if (mounted) setState(() => _isBuffering = false);
+
+    player.stream.error.listen((err) {
+      if (mounted) {
+        setState(() {
+          _isBuffering = false;
+          _errorMessage = 'Stream error — try another channel.';
+          _loading = false;
+        });
+      }
     });
+
     final url = _resolvedUrl ?? widget.channel.primaryUrl;
     final media = url.contains('uvotv-aniview')
         ? Media(url, httpHeaders: {'Referer': 'https://uvotv.com'})
         : Media(url);
+
     player.open(media).then((_) {
-      if (mounted) setState(() => _loading = false);
+      // Seek to live edge
       player.seek(const Duration(days: 365));
+      if (mounted) setState(() => _loading = false);
+    }).catchError((e) {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _errorMessage = 'Could not open stream.';
+        });
+      }
     });
-    setState(() => _loading = false);
   }
 
-  void _jumpToLive() {
-    _mediaKitPlayer?.seek(const Duration(days: 365));
-  }
+  void _jumpToLive() => _mediaKitPlayer?.seek(const Duration(days: 365));
 
   @override
   void dispose() {
@@ -594,14 +603,6 @@ class _TvPlayerScreenState extends ConsumerState<_TvPlayerScreen> {
         title: Text(widget.channel.name,
             style: const TextStyle(color: Colors.white, fontSize: 16)),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.share_rounded, color: Colors.white),
-            tooltip: 'Share',
-            onPressed: () => ShareUtils.shareRadioStation(
-              widget.channel.name,
-              widget.channel.primaryUrl,
-            ),
-          ),
           IconButton(
             icon: const Icon(Icons.fiber_manual_record_rounded, color: AppColors.liveRed),
             tooltip: 'Jump to live',

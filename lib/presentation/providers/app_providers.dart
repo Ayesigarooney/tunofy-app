@@ -14,6 +14,19 @@ import '../../data/services/tmdb_service.dart';
 import '../../data/services/rss_news_service.dart';
 import '../../data/services/audio_player_service.dart';
 
+/// Holds the globally-initialized audio handler (filled after runApp).
+class AudioServiceHolder {
+  TunoAudioHandler? _handler;
+  TunoAudioHandler get handler => _handler ?? TunoAudioHandler();
+  set handler(TunoAudioHandler? h) => _handler = h;
+}
+
+final audioServiceHolder = AudioServiceHolder();
+
+final audioHandlerProvider = Provider<TunoAudioHandler>((ref) {
+  return audioServiceHolder.handler;
+});
+
 // ─── Singleton Services ───────────────────────────────────────────────────────
 
 final stationsRepositoryProvider = Provider<StationsRepository>((ref) {
@@ -37,13 +50,10 @@ final newsServiceProvider = Provider<RssNewsService>((ref) {
   return RssNewsService();
 });
 
-final audioHandlerProvider = Provider<TunoAudioHandler>((ref) {
-  return TunoAudioHandler();
-});
+// ─── Settings ─────────────────────────────────────────────────────────────────
 
-// ─── Settings ────────────────────────────────────────────────────────────────
-
-final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
+final themeModeProvider =
+    StateNotifierProvider<ThemeModeNotifier, ThemeMode>((ref) {
   final settings = ref.watch(settingsRepositoryProvider);
   return ThemeModeNotifier(settings);
 });
@@ -59,26 +69,10 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   }
 }
 
-final lowDataModeProvider = StateNotifierProvider<LowDataModeNotifier, bool>((ref) {
-  final settings = ref.watch(settingsRepositoryProvider);
-  return LowDataModeNotifier(settings);
-});
+// ─── Player State ──────────────────────────────────────────────────────────────
 
-class LowDataModeNotifier extends StateNotifier<bool> {
-  final SettingsRepository _settings;
-
-  LowDataModeNotifier(this._settings) : super(_settings.lowDataMode);
-
-  Future<void> toggle() async {
-    final newValue = !state;
-    await _settings.setLowDataMode(newValue);
-    state = newValue;
-  }
-}
-
-// ─── Player State ─────────────────────────────────────────────────────────────
-
-final playerStateProvider = StateNotifierProvider<PlayerStateNotifier, TunoPlayerState>((ref) {
+final playerStateProvider =
+    StateNotifierProvider<PlayerStateNotifier, TunoPlayerState>((ref) {
   final handler = ref.watch(audioHandlerProvider);
   final favorites = ref.watch(favoritesRepositoryProvider);
   return PlayerStateNotifier(handler, favorites);
@@ -99,7 +93,8 @@ class PlayerStateNotifier extends StateNotifier<TunoPlayerState> {
         ProcessingState.idle => PlayerStatus.idle,
         ProcessingState.loading => PlayerStatus.loading,
         ProcessingState.buffering => PlayerStatus.buffering,
-        ProcessingState.ready => ps.playing ? PlayerStatus.playing : PlayerStatus.paused,
+        ProcessingState.ready =>
+          ps.playing ? PlayerStatus.playing : PlayerStatus.paused,
         ProcessingState.completed => PlayerStatus.idle,
       };
       state = state.copyWith(status: status);
@@ -143,45 +138,51 @@ class PlayerStateNotifier extends StateNotifier<TunoPlayerState> {
     state = state.copyWith(isMinimized: minimized);
   }
 
-  void updateMetadata(StreamMetadata metadata) {
-    state = state.copyWith(metadata: metadata);
-  }
 }
 
-// ─── Offline ──────────────────────────────────────────────────────────────────
+// ─── Offline — separate flags per content type ────────────────────────────────
 
-final offlineModeProvider = StateProvider<bool>((ref) => false);
+final radioOfflineProvider = StateProvider<bool>((ref) => false);
+final tvOfflineProvider = StateProvider<bool>((ref) => false);
+
+/// Combined: true only when BOTH radio and TV failed to load live
+final offlineModeProvider = Provider<bool>((ref) {
+  return ref.watch(radioOfflineProvider) && ref.watch(tvOfflineProvider);
+});
 
 // ─── Radio ────────────────────────────────────────────────────────────────────
 
-final radioStationsProvider = FutureProvider<List<RadioStation>>((ref) async {
+final radioStationsProvider =
+    FutureProvider<List<RadioStation>>((ref) async {
   final repo = ref.watch(stationsRepositoryProvider);
-  final stations = await repo.getRadioStations();
-  ref.read(offlineModeProvider.notifier).state = repo.isOffline;
-  return stations;
+  final result = await repo.getRadioStations();
+  ref.read(radioOfflineProvider.notifier).state =
+      result.source != DataSource.live;
+  return result.data;
 });
 
 final selectedRadioCategoryProvider = StateProvider<String>((ref) => 'All');
-
 final radioSortProvider = StateProvider<String>((ref) => 'Default');
 
-final filteredRadioStationsProvider = FutureProvider<List<RadioStation>>((ref) async {
+final filteredRadioStationsProvider =
+    FutureProvider<List<RadioStation>>((ref) async {
   final stations = await ref.watch(radioStationsProvider.future);
   final category = ref.watch(selectedRadioCategoryProvider);
   final sort = ref.watch(radioSortProvider);
   var result = category == 'All'
       ? stations.where((s) => !s.isCustomStation).toList()
-      : stations.where((s) => s.category == category && !s.isCustomStation).toList();
-  try {
-    switch (sort) {
-      case 'Country':
-        result.sort((a, b) => (a.country ?? '').toLowerCase().compareTo((b.country ?? '').toLowerCase()));
-        break;
-      case 'Name':
-        result.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-        break;
-    }
-  } catch (_) {}
+      : stations
+          .where((s) => s.category == category && !s.isCustomStation)
+          .toList();
+  switch (sort) {
+    case 'Country':
+      result.sort((a, b) => (a.country ?? '')
+          .toLowerCase()
+          .compareTo((b.country ?? '').toLowerCase()));
+    case 'Name':
+      result.sort(
+          (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  }
   return result;
 });
 
@@ -191,36 +192,38 @@ final radioCategoriesProvider = FutureProvider<List<String>>((ref) async {
   return repo.getRadioCategories();
 });
 
-// ─── TV ───────────────────────────────────────────────────────────────────────
+// ─── TV ────────────────────────────────────────────────────────────────────────
 
 final tvChannelsProvider = FutureProvider<List<TvChannel>>((ref) async {
   final repo = ref.watch(stationsRepositoryProvider);
-  final channels = await repo.getTvChannels();
-  ref.read(offlineModeProvider.notifier).state = repo.isOffline;
-  return channels;
+  final result = await repo.getTvChannels();
+  ref.read(tvOfflineProvider.notifier).state =
+      result.source != DataSource.live;
+  return result.data;
 });
 
 final selectedTvCategoryProvider = StateProvider<String>((ref) => 'All');
-
 final tvSortProvider = StateProvider<String>((ref) => 'Default');
 
-final filteredTvChannelsProvider = FutureProvider<List<TvChannel>>((ref) async {
+final filteredTvChannelsProvider =
+    FutureProvider<List<TvChannel>>((ref) async {
   final channels = await ref.watch(tvChannelsProvider.future);
   final category = ref.watch(selectedTvCategoryProvider);
   final sort = ref.watch(tvSortProvider);
   var result = category == 'All'
       ? channels.where((c) => !c.isCustomChannel).toList()
-      : channels.where((c) => c.category == category && !c.isCustomChannel).toList();
-  try {
-    switch (sort) {
-      case 'Country':
-        result.sort((a, b) => (a.country ?? '').toLowerCase().compareTo((b.country ?? '').toLowerCase()));
-        break;
-      case 'Name':
-        result.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-        break;
-    }
-  } catch (_) {}
+      : channels
+          .where((c) => c.category == category && !c.isCustomChannel)
+          .toList();
+  switch (sort) {
+    case 'Country':
+      result.sort((a, b) => (a.country ?? '')
+          .toLowerCase()
+          .compareTo((b.country ?? '').toLowerCase()));
+    case 'Name':
+      result.sort(
+          (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  }
   return result;
 });
 
@@ -234,26 +237,39 @@ final tvCategoriesProvider = FutureProvider<List<String>>((ref) async {
 
 final moviesProvider = FutureProvider<List<MovieCategory>>((ref) async {
   final service = ref.watch(tmdbServiceProvider);
-
   final results = await Future.wait([
     service.getTrendingMovies(),
     service.getMoviesByCategory('action'),
     service.getMoviesByCategory('documentary'),
     service.getAfricanMovies(),
   ]);
-
   return [
     MovieCategory(id: 'trending', name: 'Trending Media', movies: results[0]),
     MovieCategory(id: 'action', name: 'Action & Thrillers', movies: results[1]),
-    MovieCategory(id: 'documentary', name: 'Documentary Favorites', movies: results[2]),
-    MovieCategory(id: 'african', name: 'Local Cinematic Translations', movies: results[3]),
+    MovieCategory(
+        id: 'documentary', name: 'Documentary Favorites', movies: results[2]),
+    MovieCategory(
+        id: 'african',
+        name: 'Local Cinematic Translations',
+        movies: results[3]),
   ];
 });
 
+/// Debounced raw search query — updated from the UI on every keystroke
 final movieSearchQueryProvider = StateProvider<String>((ref) => '');
 
-final movieSearchResultsProvider = FutureProvider<List<Movie>>((ref) async {
+/// Debounced provider: only fires a TMDB call 400ms after the user stops typing
+final _debouncedMovieQueryProvider = FutureProvider<String>((ref) async {
   final query = ref.watch(movieSearchQueryProvider);
+  if (query.isEmpty) return '';
+  // Wait for user to stop typing before hitting the API
+  await Future<void>.delayed(const Duration(milliseconds: 400));
+  return query;
+});
+
+final movieSearchResultsProvider = FutureProvider<List<Movie>>((ref) async {
+  final queryAsync = ref.watch(_debouncedMovieQueryProvider);
+  final query = queryAsync.valueOrNull ?? '';
   if (query.isEmpty) return [];
   final service = ref.watch(tmdbServiceProvider);
   return service.searchMovies(query);
@@ -266,11 +282,10 @@ final newsProvider = FutureProvider<List<NewsArticle>>((ref) async {
   return service.fetchAll(maxPerSource: 15);
 });
 
-final selectedNewsArticleProvider = StateProvider<NewsArticle?>((ref) => null);
-
 // ─── Favorites ────────────────────────────────────────────────────────────────
 
-final favoriteIdsProvider = StateNotifierProvider<FavoriteIdsNotifier, Set<String>>((ref) {
+final favoriteIdsProvider =
+    StateNotifierProvider<FavoriteIdsNotifier, Set<String>>((ref) {
   final repo = ref.watch(favoritesRepositoryProvider);
   return FavoriteIdsNotifier(repo);
 });
@@ -278,8 +293,7 @@ final favoriteIdsProvider = StateNotifierProvider<FavoriteIdsNotifier, Set<Strin
 class FavoriteIdsNotifier extends StateNotifier<Set<String>> {
   final FavoritesRepository _repo;
 
-  FavoriteIdsNotifier(this._repo)
-      : super(Set.from(_repo.getFavoriteIds()));
+  FavoriteIdsNotifier(this._repo) : super(Set.from(_repo.getFavoriteIds()));
 
   Future<void> toggle(String id, String type) async {
     await _repo.toggleFavorite(id, type);

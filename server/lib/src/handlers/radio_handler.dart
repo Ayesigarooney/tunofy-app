@@ -19,7 +19,8 @@ Handler radioHandler(PlaylistStore store) {
     }
 
     if (uri.pathSegments.contains('search')) {
-      final q = queryParams['q'] ?? '';
+      final q = (queryParams['q'] ?? '').trim();
+      if (q.length > 100) return Response.badRequest(body: 'Query too long');
       if (q.isEmpty) return _json(store.radioStations.map((s) => s.toJson()).toList());
       final results = store.searchRadio(q);
       return _json(results.map((s) => s.toJson()).toList());

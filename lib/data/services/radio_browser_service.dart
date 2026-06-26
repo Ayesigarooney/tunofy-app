@@ -56,11 +56,11 @@ class RadioBrowserService {
   }
 
   Future<List<RadioStation>> _fetchFromRadioBrowser() async {
+    // Two parallel calls: top-clicked and top-voted (deduped by stationuuid)
     final all = <RadioStation>{};
     final results = await Future.wait([
-      _fetchList('/json/stations/topclick/500', {'hidebroken': 'true'}),
-      _fetchList('/json/stations/topvote/500', {'hidebroken': 'true'}),
-      _fetchList('/json/stations/topclick/100', {'hidebroken': 'true', 'tag': 'news'}),
+      _fetchList('/json/stations/topclick/300', {'hidebroken': 'true'}),
+      _fetchList('/json/stations/topvote/200', {'hidebroken': 'true'}),
     ], eagerError: false);
 
     for (final stations in results) {
@@ -183,8 +183,4 @@ class RadioBrowserService {
     return 'Music';
   }
 
-  void invalidateCache() {
-    _cache = null;
-    _lastFetch = null;
-  }
 }

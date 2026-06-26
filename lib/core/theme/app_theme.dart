@@ -21,7 +21,6 @@ class AppColors {
   static const Color textPrimary = Color(0xFFFFFFFF);
   static const Color textSecondary = Color(0xFFB0B0C0);
   static const Color textTertiary = Color(0xFF6A6A80);
-  static const Color textDisabled = Color(0xFF404050);
 
   // Status colors
   static const Color liveRed = Color(0xFFFF3B3B);
@@ -31,7 +30,6 @@ class AppColors {
 
   // Dividers
   static const Color divider = Color(0xFF1E1E2E);
-  static const Color border = Color(0xFF2A2A3A);
 
   // Light theme
   static const Color lightBackground = Color(0xFFFFFFFF);
@@ -50,12 +48,10 @@ class AppTheme {
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.background,
       colorScheme: const ColorScheme.dark(
-        background: AppColors.background,
         surface: AppColors.surface,
-        surfaceVariant: AppColors.surfaceVariant,
+        surfaceContainerHighest: AppColors.surfaceVariant,
         primary: AppColors.accentOrange,
         secondary: AppColors.accentGreen,
-        onBackground: AppColors.textPrimary,
         onSurface: AppColors.textPrimary,
         onPrimary: AppColors.textPrimary,
         error: AppColors.error,
@@ -92,7 +88,7 @@ class AppTheme {
         clipBehavior: Clip.antiAlias,
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: AppColors.surfaceVariant,
+        backgroundColor: AppColors.surfaceElevated,
         selectedColor: AppColors.accentOrange.withValues(alpha: 0.2),
         labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -115,12 +111,10 @@ class AppTheme {
       brightness: Brightness.light,
       scaffoldBackgroundColor: AppColors.lightBackground,
       colorScheme: const ColorScheme.light(
-        background: AppColors.lightBackground,
         surface: AppColors.lightSurface,
-        surfaceVariant: AppColors.lightSurfaceVariant,
+        surfaceContainerHighest: AppColors.lightSurfaceVariant,
         primary: AppColors.accentOrange,
         secondary: AppColors.accentGreen,
-        onBackground: AppColors.lightTextPrimary,
         onSurface: AppColors.lightTextPrimary,
         onPrimary: AppColors.textPrimary,
         error: AppColors.error,

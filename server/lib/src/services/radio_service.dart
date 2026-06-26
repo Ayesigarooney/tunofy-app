@@ -11,11 +11,20 @@ class RadioService {
 
   Future<List<RadioStation>> fetchStations() async {
     final all = <RadioStation>{};
+    final urls = [
+      '$_baseUrl/json/stations/topclick/200',
+      '$_baseUrl/json/stations/topvote/200',
+    ];
 
-    try {
-      final resp = await _client
-          .get(Uri.parse('$_baseUrl/json/stations/topclick/200'))
-          .timeout(const Duration(seconds: 20));
+    final responses = await Future.wait(
+      urls.map((url) => _client
+          .get(Uri.parse(url))
+          .timeout(const Duration(seconds: 20))
+          .catchError((_) => http.Response('[]', 500))),
+      eagerError: false,
+    );
+
+    for (final resp in responses) {
       if (resp.statusCode == 200) {
         final list = (jsonDecode(resp.body) as List)
             .map((e) => _parseStation(e as Map<String, dynamic>))
@@ -23,21 +32,7 @@ class RadioService {
             .toList();
         all.addAll(list);
       }
-    } catch (_) {}
-
-    try {
-      final resp = await _client
-          .get(Uri.parse('$_baseUrl/json/stations/topvote/200'))
-          .timeout(const Duration(seconds: 20));
-      if (resp.statusCode == 200) {
-        final list = (jsonDecode(resp.body) as List)
-            .map((e) => _parseStation(e as Map<String, dynamic>))
-            .whereType<RadioStation>()
-            .toList();
-        all.addAll(list);
-      }
-    } catch (_) {}
-
+    }
     return all.toList();
   }
 

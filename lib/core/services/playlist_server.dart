@@ -25,7 +25,7 @@ class PlaylistServer {
   })  : _channelService = channelService,
         _radioService = radioService;
 
-  Future<void> start({int port = 8080, String host = '0.0.0.0'}) async {
+  Future<void> start({int port = 8080, String host = '127.0.0.1'}) async {
     if (_server != null) return;
 
     final router = Router()
@@ -99,7 +99,8 @@ class PlaylistServer {
   }
 
   Future<Response> _tvSearchResponse(Request request) async {
-    final q = request.requestedUri.queryParameters['q'] ?? '';
+    final q = (request.requestedUri.queryParameters['q'] ?? '').trim();
+    if (q.length > 100) return Response.badRequest(body: 'Query too long');
     final channels = await _channelService.getChannels();
     if (q.isEmpty) return _jsonList(channels.map((c) => c.toJson()).toList());
     final lower = q.toLowerCase();
@@ -129,7 +130,8 @@ class PlaylistServer {
   }
 
   Future<Response> _radioSearchResponse(Request request) async {
-    final q = request.requestedUri.queryParameters['q'] ?? '';
+    final q = (request.requestedUri.queryParameters['q'] ?? '').trim();
+    if (q.length > 100) return Response.badRequest(body: 'Query too long');
     final stations = await _radioService.getStations();
     if (q.isEmpty) return _jsonList(stations.map((s) => s.toJson()).toList());
     final lower = q.toLowerCase();

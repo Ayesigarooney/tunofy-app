@@ -1,4 +1,5 @@
 // lib/data/models/radio_station.dart
+// Note: TvChannel is defined below in this same file.
 
 import 'package:hive/hive.dart';
 

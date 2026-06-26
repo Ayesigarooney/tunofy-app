@@ -35,17 +35,14 @@ dependencies:
   google_fonts: ^6.1.0
   url_launcher: ^6.2.4
 
-  # File system access for encryption key storage
+  # Secure storage for encryption key (Android Keystore / iOS Secure Enclave)
+  flutter_secure_storage: ^9.2.2
+
+  # File system access
   path_provider: ^2.1.1
 
   # Sharing (WhatsApp, Telegram, etc.)
   share_plus: ^9.0.0
-
-  # Permissions (storage, microphone, etc.)
-  permission_handler: ^11.3.0
-
-  # Audio recording for radio snippets
-  record: ^5.0.0
 
   # In-app webview for news articles
   webview_flutter: ^4.7.0
@@ -72,8 +69,7 @@ dev_dependencies:
 
 flutter_launcher_icons:
   android: true
-  ios: true
-  remove_alpha_ios: true
+  ios: false
   image_path: "assets/icon/app_icon.png"
   adaptive_icon_background: "#1A1A2E"
   adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"

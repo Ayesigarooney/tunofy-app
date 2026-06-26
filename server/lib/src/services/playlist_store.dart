@@ -58,19 +58,19 @@ class PlaylistStore {
   Future<void> refreshTvChannels() async {
     try {
       final channels = await _m3u.fetchChannels();
-      if (channels.isNotEmpty) {
-        _tvChannels = _buildTvList(channels);
-      }
-    } catch (_) {}
+      if (channels.isNotEmpty) _tvChannels = _buildTvList(channels);
+    } catch (e) {
+      print('[PlaylistStore] TV refresh failed: $e');
+    }
   }
 
   Future<void> refreshRadioStations() async {
     try {
       final stations = await _radio.fetchStations();
-      if (stations.isNotEmpty) {
-        _radioStations = _buildRadioList(stations);
-      }
-    } catch (_) {}
+      if (stations.isNotEmpty) _radioStations = _buildRadioList(stations);
+    } catch (e) {
+      print('[PlaylistStore] Radio refresh failed: $e');
+    }
   }
 
   List<TvChannel> searchTv(String query) {
@@ -91,17 +91,8 @@ class PlaylistStore {
     ).toList();
   }
 
-  List<TvChannel> _buildTvList(List<TvChannel> fetched) {
-    return [
-      ...fetched,
-    ];
-  }
-
-  List<RadioStation> _buildRadioList(List<RadioStation> fetched) {
-    return [
-      ...fetched,
-    ];
-  }
+  List<TvChannel> _buildTvList(List<TvChannel> fetched) => fetched;
+  List<RadioStation> _buildRadioList(List<RadioStation> fetched) => fetched;
 
   void dispose() {
     _refreshTimer?.cancel();

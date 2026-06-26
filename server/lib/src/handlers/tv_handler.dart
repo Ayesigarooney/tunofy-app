@@ -19,7 +19,8 @@ Handler tvHandler(PlaylistStore store) {
     }
 
     if (uri.pathSegments.contains('search')) {
-      final q = queryParams['q'] ?? '';
+      final q = (queryParams['q'] ?? '').trim();
+      if (q.length > 100) return Response.badRequest(body: 'Query too long');
       if (q.isEmpty) return _json(store.tvChannels.map((c) => c.toJson()).toList());
       final results = store.searchTv(q);
       return _json(results.map((c) => c.toJson()).toList());

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/utils/share_utils.dart';
 import '../providers/app_providers.dart';
 
 class NowPlayingCompact extends ConsumerWidget {
@@ -31,7 +30,7 @@ class NowPlayingCompact extends ConsumerWidget {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: AppColors.accentOrange.withOpacity(0.15),
+                color: AppColors.accentOrange.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(Icons.radio_rounded, color: AppColors.accentOrange, size: 16),
@@ -64,13 +63,6 @@ class NowPlayingCompact extends ConsumerWidget {
                     ),
                 ],
               ),
-            ),
-            IconButton(
-              onPressed: () => ShareUtils.shareNowPlaying(stationName, trackInfo),
-              icon: const Icon(Icons.share_rounded, size: 18),
-              color: AppColors.textSecondary,
-              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-              padding: EdgeInsets.zero,
             ),
           ],
         ),

@@ -32,11 +32,8 @@ class RadioScreen extends ConsumerWidget {
     ];
 
     stationsAsync.when(
-      loading: () => slivers.add(const SliverToBoxAdapter(
-        child: SizedBox(
-          height: 200,
-          child: Center(child: CircularProgressIndicator()),
-        ),
+      loading: () => slivers.add(const SliverFillRemaining(
+        child: RadioSkeleton(),
       )),
       error: (e, _) => slivers.add(SliverFillRemaining(
         child: TunoErrorWidget(
@@ -122,7 +119,7 @@ class _FavoritesRow extends ConsumerWidget {
                       width: 54,
                       height: 54,
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceVariant,
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: AppColors.accentOrange.withValues(alpha: 0.3),
@@ -211,7 +208,7 @@ class _RecentRow extends ConsumerWidget {
                       width: 54,
                       height: 54,
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceVariant,
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
@@ -286,7 +283,7 @@ class _RadioSortChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.accentOrange.withValues(alpha: 0.15)
-              : Theme.of(context).colorScheme.surfaceVariant.withValues(alpha: 0.5),
+              : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(12),
           border: isSelected
               ? Border.all(color: AppColors.accentOrange.withValues(alpha: 0.4))

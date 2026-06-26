@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/utils/share_utils.dart';
 import '../../../data/models/news_article.dart';
 import '../../providers/app_providers.dart';
 import '../../widgets/tunofy_widgets.dart';
@@ -33,14 +32,14 @@ class NewsScreen extends ConsumerWidget {
                         fontSize: 22)),
                 Text('fy',
                     style: TextStyle(
-                        color: Theme.of(context).colorScheme.onBackground,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.w800,
                         fontSize: 22)),
                 const SizedBox(width: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.15),
+                    color: Colors.blue.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: const Text(
@@ -72,7 +71,7 @@ class NewsScreen extends ConsumerWidget {
           ),
 
           newsAsync.when(
-            loading: () => const SliverToBoxAdapter(child: ShimmerList()),
+            loading: () => const SliverToBoxAdapter(child: NewsSkeleton()),
             error: (e, _) => SliverFillRemaining(
               child: TunoErrorWidget(
                 message: 'Could not load news.\nCheck your internet connection.',
@@ -130,9 +129,9 @@ class _BreakingHeader extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: AppColors.liveRed.withOpacity(0.15),
+            color: AppColors.liveRed.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: AppColors.liveRed.withOpacity(0.3)),
+            border: Border.all(color: AppColors.liveRed.withValues(alpha: 0.3)),
           ),
           child: const Text(
             'BREAKING NEWS',
@@ -182,7 +181,7 @@ class _FeaturedArticleCard extends StatelessWidget {
                     imageUrl: article.imageUrl!,
                     fit: BoxFit.cover,
                     errorWidget: (_, __, ___) => Container(
-                      color: Theme.of(context).colorScheme.surfaceVariant,
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
                       child: const Icon(Icons.newspaper_rounded, size: 40),
                     ),
                   ),
@@ -289,7 +288,7 @@ class _ArticleCard extends StatelessWidget {
                   height: 72,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
-                    color: Theme.of(context).colorScheme.surfaceVariant,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: CachedNetworkImage(
@@ -327,14 +326,6 @@ class _ArticleReaderScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(article.source?.name ?? 'Article'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.share_rounded),
-            onPressed: () => ShareUtils.shareNewsArticle(
-              article.title,
-              article.url,
-              article.source?.name,
-            ),
-          ),
           if (article.url != null)
             IconButton(
               icon: const Icon(Icons.open_in_browser_rounded),
@@ -406,7 +397,7 @@ class _ArticleReaderScreen extends StatelessWidget {
                   'Full article content not available in preview.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 height: 1.65,
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.82),
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.82),
               ),
             ),
 
@@ -482,14 +473,6 @@ class _ArticleWebViewScreenState extends State<_ArticleWebViewScreen> {
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
             ),
-          IconButton(
-            icon: const Icon(Icons.share_rounded),
-            onPressed: () => ShareUtils.shareNewsArticle(
-              widget.url,
-              widget.url,
-              null,
-            ),
-          ),
           IconButton(
             icon: const Icon(Icons.open_in_browser_rounded),
             tooltip: 'Open in external browser',

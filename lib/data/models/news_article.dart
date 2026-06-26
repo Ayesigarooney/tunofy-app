@@ -1,7 +1,6 @@
 // lib/data/models/news_article.dart
 
 class NewsArticle {
-  final String? id;
   final String title;
   final String? description;
   final String? content;
@@ -12,7 +11,6 @@ class NewsArticle {
   final String? author;
 
   const NewsArticle({
-    this.id,
     required this.title,
     this.description,
     this.content,
@@ -22,21 +20,6 @@ class NewsArticle {
     this.source,
     this.author,
   });
-
-  factory NewsArticle.fromJson(Map<String, dynamic> json) {
-    return NewsArticle(
-      title: json['title'] as String? ?? '',
-      description: json['description'] as String?,
-      content: json['content'] as String?,
-      url: json['url'] as String?,
-      imageUrl: json['urlToImage'] as String?,
-      publishedAt: json['publishedAt'] as String?,
-      source: json['source'] != null
-          ? NewsSource.fromJson(json['source'] as Map<String, dynamic>)
-          : null,
-      author: json['author'] as String?,
-    );
-  }
 
   String get formattedDate {
     if (publishedAt == null) return '';
@@ -62,11 +45,4 @@ class NewsSource {
   final String name;
 
   const NewsSource({this.id, required this.name});
-
-  factory NewsSource.fromJson(Map<String, dynamic> json) {
-    return NewsSource(
-      id: json['id'] as String?,
-      name: json['name'] as String? ?? 'Unknown',
-    );
-  }
 }

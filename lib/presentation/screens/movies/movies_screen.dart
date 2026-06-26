@@ -5,9 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/utils/share_utils.dart';
 import '../../../data/models/movie.dart';
-import '../../../data/services/tmdb_service.dart';
 import '../../providers/app_providers.dart';
 import '../../widgets/tunofy_widgets.dart';
 
@@ -34,14 +32,14 @@ class MoviesScreen extends ConsumerWidget {
                         fontSize: 22)),
                 Text('fy',
                     style: TextStyle(
-                        color: Theme.of(context).colorScheme.onBackground,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.w800,
                         fontSize: 22)),
                 const SizedBox(width: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.purple.withOpacity(0.2),
+                    color: Colors.purple.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: const Text(
@@ -66,9 +64,7 @@ class MoviesScreen extends ConsumerWidget {
 
           moviesAsync.when(
             loading: () => const SliverFillRemaining(
-              child: Center(
-                child: CircularProgressIndicator(color: AppColors.accentOrange),
-              ),
+              child: MoviesSkeleton(),
             ),
             error: (e, _) => SliverFillRemaining(
               child: TunoErrorWidget(
@@ -210,7 +206,9 @@ class _MovieDetailScreenState extends ConsumerState<_MovieDetailScreen> {
                       fit: BoxFit.cover,
                     )
                   else
-                    Container(color: theme.colorScheme.surfaceVariant),
+                    Container(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                    ),
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -269,7 +267,7 @@ class _MovieDetailScreenState extends ConsumerState<_MovieDetailScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
                 child: Text(widget.movie.overview!,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.75),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
                       height: 1.55,
                     )),
               ),
@@ -280,23 +278,6 @@ class _MovieDetailScreenState extends ConsumerState<_MovieDetailScreen> {
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
               child: SizedBox(
                 width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => ShareUtils.shareMovie(
-                    widget.movie.title,
-                    widget.movie.overview,
-                    widget.movie.fullPosterUrl.isNotEmpty ? widget.movie.fullPosterUrl : null,
-                  ),
-                  icon: const Icon(Icons.share_rounded, size: 18),
-                  label: const Text('Share'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.accentOrange,
-                    side: const BorderSide(color: AppColors.accentOrange),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ),
               ),
             ),
           ),
@@ -364,7 +345,7 @@ class _MovieTrailerScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.play_circle_outline, size: 80,
-                  color: Colors.white.withOpacity(0.3)),
+                  color: Colors.white.withValues(alpha: 0.3)),
               const SizedBox(height: 24),
               Text(movieTitle,
                   style: const TextStyle(color: Colors.white, fontSize: 18),

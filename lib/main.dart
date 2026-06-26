@@ -12,6 +12,7 @@ import 'core/services/home_widget_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/playlist_server.dart';
 import 'core/theme/app_theme.dart';
+import 'data/models/radio_station.dart';
 import 'data/repositories/favorites_repository.dart';
 import 'data/repositories/settings_repository.dart';
 import 'data/services/audio_player_service.dart';
@@ -22,25 +23,37 @@ import 'presentation/screens/main_shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  MediaKit.ensureInitialized();
 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-  ));
-
   await Hive.initFlutter();
+  if (!Hive.isAdapterRegistered(0)) Hive.registerAdapter(RadioStationAdapter());
+  if (!Hive.isAdapterRegistered(1)) Hive.registerAdapter(TvChannelAdapter());
+
   final hiveCipher = await HiveEncryption.cipher;
+
+  // Fast init — open Hive boxes
   final favoritesRepo = FavoritesRepository();
   await favoritesRepo.init(encryptionCipher: hiveCipher);
   final settingsRepo = SettingsRepository();
   await settingsRepo.init(encryptionCipher: hiveCipher);
 
+  // Start the UI immediately — heavy init (AudioService, MediaKit, etc.)
+  // runs in the background while the SplashScreen is visible.
+  runApp(
+    ProviderScope(
+      overrides: [
+        favoritesRepositoryProvider.overrideWithValue(favoritesRepo),
+        settingsRepositoryProvider.overrideWithValue(settingsRepo),
+      ],
+      child: const TunofyApp(),
+    ),
+  );
+
+  // ── Background init ─────────────────────────────────────────────────────
   final audioHandler = await AudioService.init(
     builder: () => TunoAudioHandler(),
     config: AudioServiceConfig(
@@ -53,6 +66,8 @@ Future<void> main() async {
     ),
   );
 
+  audioServiceHolder.handler = audioHandler;
+
   await NotificationService().init();
   HomeWidgetService.clearWidget();
 
@@ -64,16 +79,7 @@ Future<void> main() async {
     await server.start(port: EnvConfig.serverPort);
   }
 
-  runApp(
-    ProviderScope(
-      overrides: [
-        favoritesRepositoryProvider.overrideWithValue(favoritesRepo),
-        settingsRepositoryProvider.overrideWithValue(settingsRepo),
-        audioHandlerProvider.overrideWithValue(audioHandler),
-      ],
-      child: const TunofyApp(),
-    ),
-  );
+  MediaKit.ensureInitialized();
 }
 
 class TunofyApp extends ConsumerStatefulWidget {
@@ -94,16 +100,15 @@ class _TunofyAppState extends ConsumerState<TunofyApp> {
       next.whenData((articles) {
         if (articles.isEmpty) return;
         final top = articles.first;
-        if (top.url != null &&
-            !_notifiedNewsUrls.contains(top.url) &&
-            _notifiedNewsUrls.isNotEmpty) {
-          _notifiedNewsUrls.add(top.url!);
-          NotificationService().showNewsNotification(
-            title: top.title,
-            body: top.description ?? 'Tap to read',
-            articleUrl: top.url,
-          );
-        }
+        if (top.url == null) return;
+        if (_notifiedNewsUrls.contains(top.url)) return;
+        _notifiedNewsUrls.add(top.url!);
+        if (_notifiedNewsUrls.length <= 1) return;
+        NotificationService().showNewsNotification(
+          title: top.title,
+          body: top.description ?? 'Tap to read',
+          articleUrl: top.url,
+        );
       });
     });
 
@@ -113,7 +118,7 @@ class _TunofyAppState extends ConsumerState<TunofyApp> {
       themeMode: themeMode,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      home: const MainShell(),
+      home: const SplashScreen(),
     );
   }
 }
