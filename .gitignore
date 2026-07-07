@@ -54,3 +54,7 @@ build/
 # API keys - never commit
 lib/core/constants/app_constants_local.dart
 .env
+
+# Signing secrets - never commit
+android/gradle.properties
+android/app/tunofy-release.jks
